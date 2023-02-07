@@ -11,7 +11,7 @@ import axios from 'axios';
 const apiKey = 'eef69f7ae7c24101a8cc6187113cbd39'
 
 function App() {
-  const [selectedCity, setSelectedCity] = useState(null);
+  const [selectedLocation, setSelectedLocation] = useState(null);
   // const [map, setMap] = useState();
   // const mapElement = useRef();
 
@@ -22,10 +22,10 @@ function App() {
     const lonlat = transform(event.coordinate, 'EPSG:3857', 'EPSG:4326')
     console.log(lonlat)
     
-    const city = getCityFromLonLat(lonlat[0], lonlat[1]);
-    console.log(city)
-    // setSelectedCity(city);
-    // postData(city);
+    const location = getLocationFromLonLat("country", lonlat[1], lonlat[0]);
+    console.log(location)
+    setSelectedLocation(location);
+    postData(location);
   };
 
   const postData = async (city) => {
@@ -37,19 +37,20 @@ function App() {
       body: JSON.stringify({ city: city })
     });
     const data = await response.json();
-    console.log(data);
   }
 
-  const getCityFromLonLat = async (lon, lat) => {
+  const getLocationFromLonLat = async (locationAttribute, lon, lat) => {
     try {
       const response = await axios.get(`https://api.geoapify.com/v1/geocode/reverse?format=json&lat=${lon}&lon=${lat}&apiKey=${apiKey}`);
       const data = response.data;
-      if (data.address.town) {
-        return data.address.town;
-      } else if (data.address.city) {
-        return data.address.city;
+      if (data.results.length) {
+        const result = data.results[0];
+        console.log(result[locationAttribute]);
+        return result[locationAttribute];
       } else {
-        return null;
+        console.log('Something went wrong in getting the city');
+        console.log(data)
+        return null
       }
     } catch (error) {
       console.log(error);
@@ -79,9 +80,9 @@ function App() {
     <div className="App">
 
       <div id="my-map" style={{ width: "100%", height: "100vh" }}/>
-      {/* <div>
-        Selected city: {selectedCity ? selectedCity : "None"}
-      </div> */}
+      <div>
+        Selected Location: {selectedLocation == null ? selectedLocation : "None"}
+      </div> 
     </div>
   );
 }
